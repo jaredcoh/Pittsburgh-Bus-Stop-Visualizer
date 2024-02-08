@@ -1,0 +1,257 @@
+import os
+import webbrowser
+import pghbustime
+from datetime import datetime
+import time
+import pandas as pd
+from selenium import webdriver
+
+
+def function(stpid, maxpredictions):
+    mykey = "ZdGwvXBCdzSuhSw4rLyL3fJ6g"
+    api = pghbustime.BustimeAPI(mykey, _format="xml")
+    info = api.predictions(stpid=stpid, maxpredictions=maxpredictions)#make list
+    all_bus_dict = {}
+    given_string = str(info).replace("\\r", "").replace("\\n", "").replace("\\t", "")
+    for j in range(1,6):
+        each_bus_dict = {}
+        for i in ["stpnm", "rt", "prdtm"]:
+            start_string = "<" + i +">"
+            end_string = "</"+ i +">"
+            start_index = given_string.find(start_string) + len(start_string)
+            end_index = given_string.find(end_string)
+            if i == "stpnm" and given_string[start_index:end_index][0] != "F":
+                break
+            else:
+                each_bus_dict[i] =given_string[start_index:end_index]
+        all_bus_dict[j] = each_bus_dict
+        start_string_remove = "<prd>"
+        end_string_remove = "</prd>"
+        start_index = given_string.find(start_string_remove) + len(start_string_remove)
+        end_index = given_string.find(end_string_remove)
+        given_string = given_string.replace(given_string[start_index-5:end_index+6],"")
+    '''
+                    `tmstp`: when prediction was generated
+                    `typ`: prediction type ('A' = arrival, 'D' = departure)
+                    `stpid`: stop ID for prediction
+                    `stpnm`: stop name for prediction
+                    `vid`: vehicle ID for prediction
+                    `dstp`: vehicle distance to stop (feet)
+                    `rt`: bus route
+                    `des`: bus destination
+                    `prdtm`: ETA/ETD
+                    `dly`: True if bus delayed
+                    `tablockid`, `tatripid`, `zone`: internal, see `self.vehicles`
+    '''
+    return all_bus_dict
+
+driver = webdriver.Chrome()
+do = True
+while True:
+    now = datetime.now()
+    date = now.strftime("%H:%M:%S")
+    if now.second == 0 or do == True:
+        busses = function(27, 5)
+        do = False
+    stopNum1 = busses[1]['stpnm']
+    stopNum2 = busses[2]['stpnm']
+    stopNum3 = busses[3]['stpnm']
+    stopNum4 = busses[4]['stpnm']
+    stopNum5 = busses[5]['stpnm']
+    rt1 = busses[1]['rt']
+    rt2 = busses[2]['rt']
+    rt3 = busses[3]['rt']
+    rt4 = busses[4]['rt']
+    rt5 = busses[4]['rt']
+    time1 = busses[1]['prdtm'].split(" ")[1]
+    time2 = busses[2]['prdtm'].split(" ")[1]
+    time3 = busses[3]['prdtm'].split(" ")[1]
+    time4 = busses[4]['prdtm'].split(" ")[1]
+    time5 = busses[5]['prdtm'].split(" ")[1]
+    apxTime1 = str(int((datetime.strptime(busses[1]["prdtm"],'%Y%m%d %H:%M:%S') -datetime.now()).total_seconds() //60)) + "m"
+    apxTime2 = str(int((datetime.strptime(busses[2]["prdtm"],'%Y%m%d %H:%M:%S') -datetime.now()).total_seconds() //60)) + "m"
+    apxTime3 = str(int((datetime.strptime(busses[3]["prdtm"],'%Y%m%d %H:%M:%S') -datetime.now()).total_seconds() //60)) + "m"
+    apxTime4 = str(int((datetime.strptime(busses[4]["prdtm"],'%Y%m%d %H:%M:%S') -datetime.now()).total_seconds() //60)) + "m"
+    apxTime5 = str(int((datetime.strptime(busses[5]["prdtm"],'%Y%m%d %H:%M:%S') -datetime.now()).total_seconds() //60)) + "m"
+    html = '''
+    <html>
+    <head>
+        <title>Current Date and Time</title>
+        <style>
+            .time {{
+                background-color: #C41230;
+                font-weight: bolder;
+                text-align: center;
+                color: white;
+                font-family: Verdana, Geneva, Tahoma, sans-serif, sans-serif;
+                font-size: 70px;
+                padding: 0px;
+                margin: 0
+            }}
+            .title {{
+                background-color: white;
+                padding-top: 0px;
+                padding-right: 5px;
+                padding-bottom: 0px;
+                padding-left: 5px;
+                font-family: Verdana, Geneva, Tahoma, sans-serif, sans-serif;
+                font-size: 40px;
+                text-align: center;
+                font-weight: bolder;
+                color:#C41230;
+            }}
+            .busLocation{{
+                background-color: white;
+                padding-right: 10px;
+                padding-left: 10px;
+                text-align: center;
+                font-family: Verdana, Geneva, Tahoma, sans-serif, sans-serif;
+                font-size: 32px;
+                font-weight: bold;
+                color:#C41230;
+            }}
+            .busNumber{{
+                font-weight: bold;
+                font-family: Verdana, Geneva, Tahoma, sans-serif, sans-serif;
+                color:#000000;
+                font-size: 45px;
+                background-color: white;
+                display: flex;
+            }}
+            .busName{{
+                font-weight: bold;
+                font-family: Verdana, Geneva, Tahoma, sans-serif, sans-serif;
+                color:#000000;
+                font-size: 25px;
+                background-color: white;
+                display: flex;
+                margin-top:-50px;
+            }}
+            .busAppxTime{{
+                font-weight: bold;
+                font-family: Verdana, Geneva, Tahoma, sans-serif, sans-serif;
+                color:#000000;
+                font-size: 45px;
+                background-color: white;
+                display: flex;
+                margin-top:-30px;
+                justify-content: flex-end;
+                align-items: center;
+            }}
+            .busFullTime{{
+                font-weight: bold;
+                font-family: Verdana, Geneva, Tahoma, sans-serif, sans-serif;
+                color:#000000;
+                font-size: 25px;
+                background-color: white;
+                margin-top:-50px;
+                display: flex;
+                justify-content: flex-end;
+                align-items: center;
+            }}
+        </style>
+    </head>
+    <body onload="displayDateTime()">
+        <header style="background-color: #C41230;width: 100%;">
+            <div class = "time">
+                <p>{}</p>
+            </div>
+        </header>
+        <main>
+            <div style="margin-left:20px">
+                <div class = "title">
+                    <p>Predicted Bus Times for this Bus Stop</p>
+                </div>
+                <div class = "busLocation">
+                    <p>Forbes Ave + Halket St - Outbound</p>
+                    <p>(7 minutes to get to bus stop)</p>
+                </div>
+                <table style = "center; width: calc(100% - 40px); text-align: left;">
+                    <tr>
+                        <td >
+                            <div class = "busNumber">
+                                <p>{}</p>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="busAppxTime">
+                                <p>{}</p>
+                            </div>
+
+                            <div class="busFullTime">
+                                <p>{}</p>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td >
+                            <div class = "busNumber">
+                                <p>{}</p>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="busAppxTime">
+                                <p>{}</p>
+                            </div>
+                            <div class="busFullTime">
+                                <p>{}</p>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td >
+                            <div class = "busNumber">
+                                <p>{}</p>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="busAppxTime">
+                                <p>{}</p>
+                            </div>
+                            <div class="busFullTime">
+                                <p>{}</p>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td >
+                            <div class = "busNumber">
+                                <p>{}</p>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="busAppxTime">
+                                <p>{}</p>
+                            </div>
+                            <div class="busFullTime">
+                                <p>{}</p>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td >
+                            <div class = "busNumber">
+                                <p>{}</p>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="busAppxTime">
+                                <p>{}</p>
+                            </div>
+                            <div class="busFullTime">
+                                <p>{}</p>
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </main>
+    </body>
+    </html>
+    '''.replace("\n", "").replace("\t", "").format(date, rt1, apxTime1, time1, rt2, apxTime2, time2, rt3, apxTime3, time3, rt4, apxTime4, time4, rt5, apxTime5, time5)
+    html_file = 'index.html'  # Path to the HTML file
+    with open(html_file, 'w') as file:
+        file.write(html)
+    driver.get('file:///' + os.path.abspath(html_file))
+    time.sleep(1)
+driver.quit()
