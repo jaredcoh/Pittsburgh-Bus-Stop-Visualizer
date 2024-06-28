@@ -15,7 +15,7 @@ from PIL import Image, ImageTk
 import PIL.Image
 
 def busFunction(stpid, maxpredictions):
-    mykey = "ZdGwvXBCdzSuhSw4rLyL3fJ6g"
+    mykey = "<ADD KEY HERE>"
 
     api = pghbustime.BustimeAPI(mykey, _format="xml")
     info = api.predictions(stpid=stpid, maxpredictions=maxpredictions)#make list
